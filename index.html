@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Finanças">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icone-dashboard-financeiro-192.png">
+  <link rel="apple-touch-icon" href="./icons/icone-dashboard-financeiro-192.png">
+  <title>Dashboard Financeiro</title>
+  <style>
+    :root {
+      --bg:#070b12; --panel:#0d1624; --line:rgba(255,255,255,.10);
+      --text:#f8fafc; --muted:#94a3b8; --green:#10b981; --blue:#3b82f6;
+    }
+    * { box-sizing:border-box; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; background:var(--bg); }
+    body { font-family:Arial,sans-serif; color:var(--text); }
+    #app { position:fixed; inset:0; background:var(--bg); }
+    #dashboard {
+      position:absolute; inset:0; width:100%; height:100%; border:0;
+      background:#0b0f19;
+    }
+    #loading {
+      position:absolute; inset:0; z-index:10; display:flex; align-items:center;
+      justify-content:center; flex-direction:column; gap:16px; background:
+      radial-gradient(circle at 50% 30%, rgba(16,185,129,.16), transparent 36%), #070b12;
+      transition:opacity .25s ease;
+    }
+    #loading.hidden { opacity:0; pointer-events:none; }
+    .logo {
+      width:92px;height:92px;border-radius:24px;object-fit:cover;
+      box-shadow:0 0 35px rgba(16,185,129,.22);
+    }
+    h1 { margin:0; font-size:22px; }
+    p { margin:0; color:var(--muted); font-size:14px; text-align:center; max-width:310px; }
+    .spinner {
+      width:30px;height:30px;border:3px solid rgba(255,255,255,.15);
+      border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #install {
+      display:none; border:0; border-radius:12px; padding:12px 18px;
+      background:var(--green); color:#03120d; font-weight:800; cursor:pointer;
+    }
+    #fallback {
+      display:none; position:absolute; left:16px; right:16px; bottom:20px; z-index:20;
+      padding:14px; border:1px solid var(--line); border-radius:14px;
+      background:rgba(13,22,36,.96); text-align:center;
+    }
+    #fallback a { color:#fff; font-weight:700; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <iframe
+      id="dashboard"
+      src="https://script.google.com/macros/s/AKfycbwF7n6QJyse0qL7rMWpY5hbrj33p-b1__MbYFrmk7X3wCGDsoaIPq0kUIjehMhd_9H/exec"
+      title="Dashboard Financeiro"
+      allow="fullscreen"
+      referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+
+    <section id="loading" aria-live="polite">
+      <img class="logo" src="./icons/icone-dashboard-financeiro-192.png" alt="Dashboard Financeiro">
+      <h1>Dashboard Financeiro</h1>
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Abrindo seu painel financeiro...</p>
+      <button id="install">Instalar aplicativo</button>
+    </section>
+
+    <section id="fallback">
+      <p>Se o painel não carregar dentro do aplicativo, abra diretamente:</p>
+      <p><a href="https://script.google.com/macros/s/AKfycbwF7n6QJyse0qL7rMWpY5hbrj33p-b1__MbYFrmk7X3wCGDsoaIPq0kUIjehMhd_9H/exec" target="_blank" rel="noopener">Abrir Dashboard Financeiro</a></p>
+    </section>
+  </main>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(console.error);
+      });
+    }
+
+    const iframe = document.getElementById("dashboard");
+    const loading = document.getElementById("loading");
+    const fallback = document.getElementById("fallback");
+
+    iframe.addEventListener("load", () => {
+      setTimeout(() => loading.classList.add("hidden"), 500);
+    });
+
+    setTimeout(() => {
+      if (!loading.classList.contains("hidden")) {
+        loading.classList.add("hidden");
+        fallback.style.display = "block";
+      }
+    }, 12000);
+
+    let deferredPrompt = null;
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredPrompt = event;
+      document.getElementById("install").style.display = "inline-block";
+    });
+
+    document.getElementById("install").addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById("install").style.display = "none";
+    });
+  </script>
+</body>
+</html>
